@@ -10,37 +10,70 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libft/libft.h"
 #include "get_next_line.h"
 
 #include <stdio.h>
-#include <stdlib.h>
+
+static t_list		*get_file(int fd, t_list **lst)
+{
+	t_list		*cur;
+
+	cur = *lst;
+	if (!(*lst))
+	{
+		*lst = ft_lstnew(NULL, 0);
+		(*lst)->content_size = fd;
+		return (*lst);
+	}
+	while (cur != NULL)
+	{
+		if (cur->content_size == (size_t)fd)
+			return (cur);
+		cur = cur->next;
+	}
+	cur = ft_lstnew(NULL, 0);
+	cur->content_size = fd;
+	ft_lstadd_end(lst, cur);
+	return (cur);
+}
+
+static void			extra(void **str, int offset)
+{
+	char	*extra;
+
+	extra = ft_strdup(*str + offset + 1);
+	free(*str);
+	*str = ft_strdup(extra);
+	free(extra);
+	extra = NULL;
+}
 
 int					get_next_line(const int fd, char **line)
 {
-	static char		*file[1024];
+	static t_list	*lst;
+	t_list			*file;
 	char			buff[BUFF_SIZE + 1];
 	int				bytes;
 
-
-	if ((!file[fd] && !(file[fd] = ft_strnew(1))) || fd < 0)
+	ft_bzero(buff, BUFF_SIZE + 1);
+	file = get_file(fd, &lst);
+	if ((!file->content && !(file->content = ft_strdup(""))) || fd < 0)
 		return (-1);
-	if (!(*line = ft_strnew(1)))
-	 	return (-1);
-	while ((bytes = read(fd, buff, BUFF_SIZE)))
+	while (ft_strchr(file->content, '\n') == NULL &&
+	(bytes = read(fd, buff, BUFF_SIZE)) > 0)
 	{
 		buff[bytes] = '\0';
-		if (!(file[fd] = ft_strjoin(file[fd], buff)))
+		file->content = ft_realloc_str(file->content, BUFF_SIZE);
+		if (!(file->content = ft_strcat(file->content, buff)))
 			return (-1);
-		if (ft_strchr(buff, '\n') != NULL)
-			break ;
 	}
-	if (bytes < BUFF_SIZE && !ft_strlen(file[fd]))
-		return (0);
-	bytes = ft_copy_until(line, file[fd], '\n');
-	if (bytes < (int)ft_strlen(file[fd]))
-		file[fd] += bytes + 1;
+	if ((bytes < BUFF_SIZE && !ft_strlen(file->content)) || bytes == -1)
+		return (bytes == -1 ? -1 : 0);
+	bytes = ft_copy_until(line, file->content, '\n');
+	if (bytes < (int)ft_strlen(file->content))
+		extra(&file->content, bytes);
 	else
-		ft_strclr(file[fd]);
+		ft_strclr(file->content);
 	return (1);
 }
