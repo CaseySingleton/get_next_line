@@ -1,5 +1,5 @@
 # get_next_line
-get_next_line() is a funciton that will gather all information from a file or standard input up until a newline character or the end of file.
+get_next_line() is a funciton that will gather information from a file or standard input up until a newline character or the end of file, and then places that information into a string passed by address in the function parameters.
 
 Purpose:
 - Create a successful function that has no leaks
